@@ -1,0 +1,26 @@
+{
+  "name": "genetic-algorithm-library",
+  "version": "0.0.1",
+  "description": "General-purpose Genetic Algorithm library",
+  "main": "Genetic.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liranh85/genetic-algorithm-library.git"
+  },
+  "keywords": [
+    "Genetic",
+    "Algorithm",
+    "Natural",
+    "Selection",
+    "Evolution"
+  ],
+  "author": "Liran Harary",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/liranh85/genetic-algorithm-library/issues"
+  },
+  "homepage": "https://github.com/liranh85/genetic-algorithm-library#readme"
+}
