@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/liranh85/genetic-algorithm-library.git"
+    "url": "git+https://github.com/liranh85/genetic-lib.git"
   },
   "keywords": [
     "Genetic",
@@ -20,9 +20,9 @@
   "author": "Liran Harary",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/liranh85/genetic-algorithm-library/issues"
+    "url": "https://github.com/liranh85/genetic-lib/issues"
   },
-  "homepage": "https://github.com/liranh85/genetic-algorithm-library#readme",
+  "homepage": "https://github.com/liranh85/genetic-lib#readme",
   "devDependencies": {
     "babel-core": "^6.26.0",
     "babel-plugin-transform-async-functions": "^6.22.0",
