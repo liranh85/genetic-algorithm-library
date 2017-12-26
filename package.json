@@ -2,7 +2,7 @@
   "name": "genetic-lib",
   "version": "1.0.0-beta.2",
   "description": "General-purpose Genetic Algorithm library",
-  "main": "genetic.js",
+  "main": "build/genetic.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
