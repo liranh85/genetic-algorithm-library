@@ -7,10 +7,10 @@ gulp.task("browserify", function() {
 	return browserify(config.source + "index.js")
 		.transform("babelify", {
 			presets: ['es2015'],
-			plugins: ['syntax-async-functions']
+			plugins: ['transform-object-rest-spread', 'syntax-async-functions']
 		})
 		.bundle()
-		.pipe(source('bundle.js'))
+		.pipe(source('genetic.js'))
 		.pipe(gulp.dest(config.build))
 });
 

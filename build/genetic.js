@@ -5,6 +5,8 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -26,7 +28,9 @@ var Genetic = function () {
         this.population = [];
         this.currentGeneration = 0;
         this.fittestEntityEver = null;
-        this.paused = false, this._init();
+        this.paused = false;
+        this._next = this._next.bind(this);
+        this._init();
     }
 
     _createClass(Genetic, [{
@@ -36,7 +40,6 @@ var Genetic = function () {
             if (this.initFunction) {
                 this.initFunction();
             }
-            this._createFirstGeneration();
             if (this.config.pauseElm) {
                 this._onPauseClicked = this._onPauseClicked.bind(this);
                 this.config.pauseElm.addEventListener('click', this._onPauseClicked);
@@ -44,6 +47,17 @@ var Genetic = function () {
             if (this.config.stopElm) {
                 this._onStopClicked = this._onStopClicked.bind(this);
                 this.config.stopElm.addEventListener('click', this._onStopClicked);
+            }
+        }
+    }, {
+        key: '_initNumFittestToSelect',
+        value: function _initNumFittestToSelect() {
+            if (!this.config.numberOfFittestToSelect) {
+                // Default value is 2 if not set
+                this.config.numberOfFittestToSelect = 2;
+            } else if (this.config.numberOfFittestToSelect % 2 !== 0) {
+                // Must be an even number
+                this.config.numberOfFittestToSelect++;
             }
         }
     }, {
@@ -66,55 +80,61 @@ var Genetic = function () {
             }
         }
     }, {
-        key: '_initNumFittestToSelect',
-        value: function _initNumFittestToSelect() {
-            if (!this.config.numberOfFittestToSelect) {
-                // Default value is 2 if not set
-                this.config.numberOfFittestToSelect = 2;
-            } else if (this.config.numberOfFittestToSelect % 2 !== 0) {
-                // Must be an even number
-                this.config.numberOfFittestToSelect++;
+        key: 'solve',
+        value: async function solve() {
+            try {
+                await this._createFirstGeneration();
+                this._evolve();
+            } catch (e) {
+                console.error(e);
+                this._onStopClicked();
             }
         }
     }, {
         key: '_createFirstGeneration',
-        value: function _createFirstGeneration() {
-            for (var i = 0; i < this.config.size; i++) {
-                this.population.push({
-                    DNA: this.seed(),
-                    fitness: this.config.initialFitness
-                });
+        value: async function _createFirstGeneration() {
+            try {
+                for (var i = 0; i < this.config.size; i++) {
+                    this.population.push({
+                        DNA: await this.seed(),
+                        fitness: this.config.initialFitness
+                    });
+                }
+            } catch (e) {
+                console.error(e);
+                this._simulationComplete();
             }
         }
     }, {
-        key: 'evolve',
-        value: async function evolve() {
+        key: '_evolve',
+        value: async function _evolve() {
             try {
                 await this._computePopulationFitness();
+                this._sortEntitiesByFittest();
+                this._updateFitnessRecord();
+                // If notification is due
+                if (this.config.skip === 0 || this.currentGeneration % this.config.skip === 0) {
+                    await this.notification(this._stats());
+                }
+                this._next();
             } catch (e) {
                 console.error(e);
-                return;
+                this._onStopClicked();
             }
-            if (this.config.killTheWeak) {
-                this._killTheWeak();
-            }
-            this._sortEntitiesByFittest();
-            this._updateFitnessRecord();
-            if (this.config.skip === 0 || this.currentGeneration % this.config.skip === 0) {
-                this.notification(this._stats());
-            }
-            this._next();
         }
     }, {
         key: '_next',
         value: function _next() {
             if (!this.paused) {
                 if (this.isFinished(this._stats())) {
-                    this._SimulationComplete();
+                    this.notification(_extends({}, this._stats(), {
+                        isFinished: true
+                    }));
+                    this._simulationComplete();
                 } else {
                     this._createNewGeneration();
                     this.currentGeneration++;
-                    this.evolve();
+                    this._evolve();
                 }
             }
         }
@@ -126,7 +146,7 @@ var Genetic = function () {
             var resolvedPromisesNum = 0;
             return new Promise(function (resolve, reject) {
                 _this.population.forEach(function (entity, i) {
-                    _this.fitness(entity.DNA, 'entity' + i).then(function (response) {
+                    Promise.resolve(_this.fitness(entity.DNA, 'entity' + i)).then(function (response) {
                         entity.fitness = response;
                         resolvedPromisesNum++;
                         if (_this.config.killTheWeak && resolvedPromisesNum === _this.config.numberOfFittestToSelect || resolvedPromisesNum === _this.population.length) {
@@ -135,13 +155,6 @@ var Genetic = function () {
                     });
                 });
             });
-        }
-    }, {
-        key: '_killTheWeak',
-        value: function _killTheWeak() {
-            for (var i = 0; i < this.population.length; i++) {
-                document.getElementById('entity' + i) && document.getElementById('entity' + i).dispatchEvent(new CustomEvent('fittest-found'));
-            }
         }
     }, {
         key: '_sortEntitiesByFittest',
@@ -178,8 +191,10 @@ var Genetic = function () {
 
             var createMutateAndAddNewborns = function createMutateAndAddNewborns(DNA1, DNA2) {
                 var newbornsDNAs = _this4.crossover(DNA1, DNA2);
-                newbornsDNAs[0] = _this4.mutate(newbornsDNAs[0], _this4.config.mutationIterations);
-                newbornsDNAs[1] = _this4.mutate(newbornsDNAs[1], _this4.config.mutationIterations);
+                for (var i = 0; i < _this4.config.mutationIterations; i++) {
+                    newbornsDNAs[0] = _this4.mutate(newbornsDNAs[0]);
+                    newbornsDNAs[1] = _this4.mutate(newbornsDNAs[1]);
+                }
                 _this4.population = _this4.population.concat(newbornsDNAs.map(function (newbornDNA) {
                     return {
                         DNA: _this4._clone(newbornDNA),
@@ -216,12 +231,13 @@ var Genetic = function () {
                 population: this._clone(this.population),
                 generation: this.currentGeneration,
                 mean: this.getMeanFitness(),
-                fittestEver: this.fittestEntityEver
+                fittestEver: this.fittestEntityEver,
+                isFinished: false
             };
         }
     }, {
-        key: '_SimulationComplete',
-        value: function _SimulationComplete() {
+        key: '_simulationComplete',
+        value: function _simulationComplete() {
             if (this.config.pauseElm) {
                 this.config.pauseElm.removeEventListener('click', this._onPauseClicked);
             }
