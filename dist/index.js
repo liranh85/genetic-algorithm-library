@@ -1,19 +1,38 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+var _stringify = require('babel-runtime/core-js/json/stringify');
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+var _stringify2 = _interopRequireDefault(_stringify);
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+var _promise = require('babel-runtime/core-js/promise');
+
+var _promise2 = _interopRequireDefault(_promise);
+
+var _extends2 = require('babel-runtime/helpers/extends');
+
+var _extends3 = _interopRequireDefault(_extends2);
+
+var _regenerator = require('babel-runtime/regenerator');
+
+var _regenerator2 = _interopRequireDefault(_regenerator);
+
+var _classCallCheck2 = require('babel-runtime/helpers/classCallCheck');
+
+var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
+
+var _createClass2 = require('babel-runtime/helpers/createClass');
+
+var _createClass3 = _interopRequireDefault(_createClass2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var Genetic = function () {
     function Genetic(settings) {
-        _classCallCheck(this, Genetic);
+        (0, _classCallCheck3.default)(this, Genetic);
 
         this.initFunction = settings.initFunction;
         this.seed = settings.geneticFunctions.seed;
@@ -33,7 +52,7 @@ var Genetic = function () {
         this._init();
     }
 
-    _createClass(Genetic, [{
+    (0, _createClass3.default)(Genetic, [{
         key: '_init',
         value: function _init() {
             this._initNumFittestToSelect();
@@ -81,53 +100,137 @@ var Genetic = function () {
         }
     }, {
         key: 'solve',
-        value: async function solve() {
-            try {
-                await this._createFirstGeneration();
-                this._evolve();
-            } catch (e) {
-                console.error(e);
-                this._onStopClicked();
-            }
+        value: function solve() {
+            return _regenerator2.default.async(function solve$(_context) {
+                while (1) {
+                    switch (_context.prev = _context.next) {
+                        case 0:
+                            _context.prev = 0;
+                            _context.next = 3;
+                            return _regenerator2.default.awrap(this._createFirstGeneration());
+
+                        case 3:
+                            this._evolve();
+                            _context.next = 10;
+                            break;
+
+                        case 6:
+                            _context.prev = 6;
+                            _context.t0 = _context['catch'](0);
+
+                            console.error(_context.t0);
+                            this._onStopClicked();
+
+                        case 10:
+                        case 'end':
+                            return _context.stop();
+                    }
+                }
+            }, null, this, [[0, 6]]);
         }
     }, {
         key: '_createFirstGeneration',
-        value: async function _createFirstGeneration() {
-            try {
-                for (var i = 0; i < this.config.size; i++) {
-                    this.population.push({
-                        DNA: await this.seed(),
-                        fitness: this.config.initialFitness
-                    });
+        value: function _createFirstGeneration() {
+            var i;
+            return _regenerator2.default.async(function _createFirstGeneration$(_context2) {
+                while (1) {
+                    switch (_context2.prev = _context2.next) {
+                        case 0:
+                            _context2.prev = 0;
+                            i = 0;
+
+                        case 2:
+                            if (!(i < this.config.size)) {
+                                _context2.next = 13;
+                                break;
+                            }
+
+                            _context2.t0 = this.population;
+                            _context2.next = 6;
+                            return _regenerator2.default.awrap(this.seed());
+
+                        case 6:
+                            _context2.t1 = _context2.sent;
+                            _context2.t2 = this.config.initialFitness;
+                            _context2.t3 = {
+                                DNA: _context2.t1,
+                                fitness: _context2.t2
+                            };
+
+                            _context2.t0.push.call(_context2.t0, _context2.t3);
+
+                        case 10:
+                            i++;
+                            _context2.next = 2;
+                            break;
+
+                        case 13:
+                            _context2.next = 19;
+                            break;
+
+                        case 15:
+                            _context2.prev = 15;
+                            _context2.t4 = _context2['catch'](0);
+
+                            console.error(_context2.t4);
+                            this._simulationComplete();
+
+                        case 19:
+                        case 'end':
+                            return _context2.stop();
+                    }
                 }
-            } catch (e) {
-                console.error(e);
-                this._simulationComplete();
-            }
+            }, null, this, [[0, 15]]);
         }
     }, {
         key: '_evolve',
-        value: async function _evolve() {
-            try {
-                await this._computePopulationFitness();
-                this._sortEntitiesByFittest();
-                this._updateFitnessRecord();
-                // If notification is due
-                if (this.config.skip === 0 || this.currentGeneration % this.config.skip === 0) {
-                    await this.notification(this._stats());
+        value: function _evolve() {
+            return _regenerator2.default.async(function _evolve$(_context3) {
+                while (1) {
+                    switch (_context3.prev = _context3.next) {
+                        case 0:
+                            _context3.prev = 0;
+                            _context3.next = 3;
+                            return _regenerator2.default.awrap(this._computePopulationFitness());
+
+                        case 3:
+                            this._sortEntitiesByFittest();
+                            this._updateFitnessRecord();
+                            // If notification is due
+
+                            if (!(this.config.skip === 0 || this.currentGeneration % this.config.skip === 0)) {
+                                _context3.next = 8;
+                                break;
+                            }
+
+                            _context3.next = 8;
+                            return _regenerator2.default.awrap(this.notification(this._stats()));
+
+                        case 8:
+                            this._next();
+                            _context3.next = 15;
+                            break;
+
+                        case 11:
+                            _context3.prev = 11;
+                            _context3.t0 = _context3['catch'](0);
+
+                            console.error(_context3.t0);
+                            this._onStopClicked();
+
+                        case 15:
+                        case 'end':
+                            return _context3.stop();
+                    }
                 }
-                this._next();
-            } catch (e) {
-                console.error(e);
-                this._onStopClicked();
-            }
+            }, null, this, [[0, 11]]);
         }
     }, {
         key: '_next',
         value: function _next() {
             if (!this.paused) {
                 if (this.isFinished(this._stats())) {
-                    this.notification(_extends({}, this._stats(), {
+                    this.notification((0, _extends3.default)({}, this._stats(), {
                         isFinished: true
                     }));
                     this._simulationComplete();
@@ -144,9 +247,9 @@ var Genetic = function () {
             var _this = this;
 
             var resolvedPromisesNum = 0;
-            return new Promise(function (resolve, reject) {
+            return new _promise2.default(function (resolve, reject) {
                 _this.population.forEach(function (entity, i) {
-                    Promise.resolve(_this.fitness(entity.DNA, 'entity' + i)).then(function (response) {
+                    _promise2.default.resolve(_this.fitness(entity.DNA, 'entity' + i)).then(function (response) {
                         entity.fitness = response;
                         resolvedPromisesNum++;
                         if (_this.config.killTheWeak && resolvedPromisesNum === _this.config.numberOfFittestToSelect || resolvedPromisesNum === _this.population.length) {
@@ -214,7 +317,7 @@ var Genetic = function () {
     }, {
         key: '_clone',
         value: function _clone(obj) {
-            return JSON.parse(JSON.stringify(obj));
+            return JSON.parse((0, _stringify2.default)(obj));
         }
     }, {
         key: 'getMeanFitness',
@@ -247,10 +350,7 @@ var Genetic = function () {
             this.onFinished(this._stats());
         }
     }]);
-
     return Genetic;
 }();
 
 exports.default = Genetic;
-
-},{}]},{},[1]);
