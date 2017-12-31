@@ -31,19 +31,22 @@ var _createClass3 = _interopRequireDefault(_createClass2);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var Genetic = function () {
-    function Genetic(settings) {
+    function Genetic() {
+        var settings = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
         (0, _classCallCheck3.default)(this, Genetic);
 
         this.initFunction = settings.initFunction;
-        this.seed = settings.geneticFunctions.seed;
-        this.mutate = settings.geneticFunctions.mutate;
-        this.crossover = settings.geneticFunctions.crossover;
-        this.fitness = settings.geneticFunctions.fitness;
-        this.notification = settings.geneticFunctions.notification;
-        this.config = settings.config;
+        var geneticFunctions = typeof settings.geneticFunctions === 'undefined' ? {} : settings.geneticFunctions;
+        this.seed = geneticFunctions.seed;
+        this.mutate = geneticFunctions.mutate;
+        this.crossover = geneticFunctions.crossover;
+        this.fitness = geneticFunctions.fitness;
+        this.notification = geneticFunctions.notification;
+        this.config = typeof settings.config === 'undefined' ? {} : settings.config;
         this.isFinished = settings.isFinished;
         this.onFinished = settings.onFinished;
         this.userData = settings.userData;
+        this.isSettingsValid = this.checkSettingsValid(settings);
         this.population = [];
         this.currentGeneration = 0;
         this.fittestEntityEver = null;
@@ -53,10 +56,21 @@ var Genetic = function () {
     }
 
     (0, _createClass3.default)(Genetic, [{
+        key: 'checkSettingsValid',
+        value: function checkSettingsValid(settings) {
+            return settings.geneticFunctions && [settings.geneticFunctions.seed, settings.geneticFunctions.mutate, settings.geneticFunctions.crossover, settings.geneticFunctions.fitness, settings.geneticFunctions.notification, settings.isFinished].every(function (func) {
+                return typeof func === 'function';
+            });
+        }
+    }, {
         key: '_init',
         value: function _init() {
+            if (!this.isSettingsValid) {
+                return;
+            }
             this._initNumFittestToSelect();
-            if (this.initFunction) {
+            this._setDefaults();
+            if (typeof this.initFunction === 'function') {
                 this.initFunction();
             }
             if (this.config.pauseElm) {
@@ -69,10 +83,19 @@ var Genetic = function () {
             }
         }
     }, {
+        key: '_setDefaults',
+        value: function _setDefaults() {
+            this.config.size = typeof this.config.size !== 'number' || this.numberOfFittestToSelect > this.config.size ? 20 : this.config.size;
+            this.config.mutationIterations = typeof this.config.mutationIterations !== 'number' || this.config.mutationIterations < 0 ? 1 : this.config.mutationIterations;
+            this.config.skip = typeof this.config.skip !== 'number' || this.config.mutationIterations < 1 ? 1 : this.config.skip;
+            this.config.optimise = this.config.optimise !== 'min' ? 'max' : this.config.optimise;
+            this.config.initialFitness = typeof this.config.initialFitness !== 'number' ? 0 : this.config.initialFitness;
+        }
+    }, {
         key: '_initNumFittestToSelect',
         value: function _initNumFittestToSelect() {
             if (!this.config.numberOfFittestToSelect) {
-                // Default value is 2 if not set
+                // Default value is 2 if falsy
                 this.config.numberOfFittestToSelect = 2;
             } else if (this.config.numberOfFittestToSelect % 2 !== 0) {
                 // Must be an even number
@@ -105,28 +128,37 @@ var Genetic = function () {
                 while (1) {
                     switch (_context.prev = _context.next) {
                         case 0:
-                            _context.prev = 0;
-                            _context.next = 3;
-                            return _regenerator2.default.awrap(this._createFirstGeneration());
+                            if (this.isSettingsValid) {
+                                _context.next = 3;
+                                break;
+                            }
+
+                            console.error('genetic-lib: some of the mandatory functions are not functions. Cannot proceed.');
+                            return _context.abrupt('return');
 
                         case 3:
-                            this._evolve();
-                            _context.next = 10;
-                            break;
+                            _context.prev = 3;
+                            _context.next = 6;
+                            return _regenerator2.default.awrap(this._createFirstGeneration());
 
                         case 6:
-                            _context.prev = 6;
-                            _context.t0 = _context['catch'](0);
+                            this._evolve();
+                            _context.next = 13;
+                            break;
+
+                        case 9:
+                            _context.prev = 9;
+                            _context.t0 = _context['catch'](3);
 
                             console.error(_context.t0);
                             this._onStopClicked();
 
-                        case 10:
+                        case 13:
                         case 'end':
                             return _context.stop();
                     }
                 }
-            }, null, this, [[0, 6]]);
+            }, null, this, [[3, 9]]);
         }
     }, {
         key: '_createFirstGeneration',
@@ -198,7 +230,7 @@ var Genetic = function () {
                             this._updateFitnessRecord();
                             // If notification is due
 
-                            if (!(this.config.skip === 0 || this.currentGeneration % this.config.skip === 0)) {
+                            if (!(this.currentGeneration % this.config.skip === 0)) {
                                 _context3.next = 8;
                                 break;
                             }
@@ -278,7 +310,7 @@ var Genetic = function () {
             var _this3 = this;
 
             var aIsFitterThanB = function aIsFitterThanB(a, b) {
-                return _this3.config.optimise === 'max' ? a > b : a < b;
+                return _this3.config.optimise === 'min' ? a < b : a > b;
             };
 
             var fittestEntityInThisGeneration = this.population[0];
@@ -347,7 +379,9 @@ var Genetic = function () {
             if (this.config.stopElm) {
                 this.config.stopElm.removeEventListener('click', this._onStopClicked);
             }
-            this.onFinished(this._stats());
+            if (typeof this.onFinished === 'function') {
+                this.onFinished(this._stats());
+            }
         }
     }]);
     return Genetic;

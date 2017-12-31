@@ -1,15 +1,17 @@
 class Genetic {
-    constructor(settings) {
+    constructor(settings = {}) {
         this.initFunction = settings.initFunction;
-        this.seed = settings.geneticFunctions.seed;
-        this.mutate = settings.geneticFunctions.mutate;
-        this.crossover = settings.geneticFunctions.crossover;
-        this.fitness = settings.geneticFunctions.fitness;
-        this.notification = settings.geneticFunctions.notification;
-        this.config = settings.config;
+        const geneticFunctions = typeof settings.geneticFunctions === 'undefined' ? {} : settings.geneticFunctions;
+        this.seed = geneticFunctions.seed;
+        this.mutate = geneticFunctions.mutate;
+        this.crossover = geneticFunctions.crossover;
+        this.fitness = geneticFunctions.fitness;
+        this.notification = geneticFunctions.notification;
+        this.config = typeof settings.config === 'undefined' ? {} : settings.config;
         this.isFinished = settings.isFinished;
         this.onFinished = settings.onFinished;
         this.userData = settings.userData;
+        this.isSettingsValid = this.checkSettingsValid(settings);
         this.population = [];
         this.currentGeneration = 0;
         this.fittestEntityEver = null;
@@ -18,9 +20,24 @@ class Genetic {
         this._init();
     }
 
+    checkSettingsValid(settings) {
+        return settings.geneticFunctions && [
+            settings.geneticFunctions.seed,
+            settings.geneticFunctions.mutate,
+            settings.geneticFunctions.crossover,
+            settings.geneticFunctions.fitness,
+            settings.geneticFunctions.notification,
+            settings.isFinished
+        ].every(func => typeof func === 'function');
+    }
+
     _init() {
+        if (!this.isSettingsValid) {
+            return;
+        }
         this._initNumFittestToSelect();
-        if (this.initFunction) {
+        this._setDefaults();
+        if (typeof this.initFunction === 'function') {
             this.initFunction();
         }
         if (this.config.pauseElm) {
@@ -33,9 +50,17 @@ class Genetic {
         }
     }
 
+    _setDefaults() {
+        this.config.size = typeof this.config.size !== 'number' || this.numberOfFittestToSelect > this.config.size ? 20 : this.config.size;
+        this.config.mutationIterations = typeof this.config.mutationIterations !== 'number' || this.config.mutationIterations < 0 ? 1 : this.config.mutationIterations;
+        this.config.skip = typeof this.config.skip !== 'number' || this.config.mutationIterations < 1 ? 1 : this.config.skip;
+        this.config.optimise = this.config.optimise !== 'min' ? 'max' : this.config.optimise;
+        this.config.initialFitness = typeof this.config.initialFitness !== 'number' ? 0 : this.config.initialFitness;
+    }
+
     _initNumFittestToSelect() {
         if (!this.config.numberOfFittestToSelect) {
-            // Default value is 2 if not set
+            // Default value is 2 if falsy
             this.config.numberOfFittestToSelect = 2;
         } else if (this.config.numberOfFittestToSelect % 2 !== 0) {
             // Must be an even number
@@ -59,6 +84,10 @@ class Genetic {
     }
 
     async solve() {
+        if (!this.isSettingsValid) {
+            console.error('genetic-lib: some of the mandatory functions are not functions. Cannot proceed.');
+            return;
+        }
         try {
             await this._createFirstGeneration();
             this._evolve();
@@ -90,7 +119,7 @@ class Genetic {
             this._sortEntitiesByFittest();
             this._updateFitnessRecord();
             // If notification is due
-            if (this.config.skip === 0 || this.currentGeneration % this.config.skip === 0) {
+            if (this.currentGeneration % this.config.skip === 0) {
                 await this.notification(this._stats());
             }
             this._next();
@@ -144,9 +173,9 @@ class Genetic {
 
     _updateFitnessRecord() {
         const aIsFitterThanB = (a, b) => {
-            return this.config.optimise === 'max' ?
-                a > b :
-                a < b;
+            return this.config.optimise === 'min' ?
+                a < b :
+                a > b;
         };
 
         const fittestEntityInThisGeneration = this.population[0];
@@ -208,7 +237,9 @@ class Genetic {
         if (this.config.stopElm) {
             this.config.stopElm.removeEventListener('click', this._onStopClicked);
         }
-        this.onFinished(this._stats());
+        if (typeof this.onFinished === 'function') {
+            this.onFinished(this._stats());
+        }
     }
 }
 

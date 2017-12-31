@@ -1,6 +1,6 @@
 {
   "name": "genetic-lib",
-  "version": "1.0.0-beta.5",
+  "version": "1.0.0-beta.6",
   "description": "General-purpose Genetic Algorithm library",
   "main": "dist/index.js",
   "scripts": {
@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/liranh85/genetic-lib#readme",
   "devDependencies": {
+    "babel-cli": "^6.26.0",
     "babel-core": "^6.26.0",
     "babel-plugin-transform-async-functions": "^6.22.0",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
@@ -36,8 +37,5 @@
     "browserify": "^14.5.0",
     "gulp": "^3.9.1",
     "vinyl-source-stream": "^1.1.1"
-  },
-  "dependencies": {
-    "babel-cli": "^6.26.0"
   }
 }

@@ -1,8 +1,8 @@
-# genetic-algorithm-library
+# genetic-lib
 
 General-purpose Genetic Algorithm library.
 
-README.md will be updated soon.
+This README.md will be completed soon.
 
 ## Installation
 ```
@@ -13,14 +13,16 @@ npm install genetic-lib
 ```js
 import Genetic from 'genetic-lib';
 
-var settings = {
-    initFunction: initFunction,
+// (Define relevant functions to be used in the settings object)
+
+const settings = {
+    initFunction,
     geneticFunctions: {
-        seed: seed,
-        mutate: mutate,
-        crossover: crossover,
-        fitness: fitness,
-        notification: notification
+        seed,
+        mutate,
+        crossover,
+        fitness,
+        notification
     },
     config: {
         size: 100,
@@ -32,9 +34,13 @@ var settings = {
         pauseElm: document.getElementById('pause'),
         stopElm: document.getElementById('stop')
     },
-    isFinished: isFinished,
-    onFinished: onFinished
+    isFinished,
+    onFinished
 };
 
 const genetic = new Genetic(settings);
 ```
+
+## Example projects using this library
+#### - Genetic Fly in Maze: https://github.com/liranh85/genetic-fly-in-maze
+#### - Genetic String Solver: https://github.com/liranh85/genetic-string-solver
