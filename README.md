@@ -56,5 +56,3 @@ const genetic = new Genetic(settings);
 * #### Genetic String Solver:
   * Repo: https://github.com/liranh85/genetic-string-solver
   * Demo: http://www.liran.co.uk/ga/genetic-string-solver
-
-*This README.md will be completed soon.*
