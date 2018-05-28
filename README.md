@@ -24,30 +24,34 @@ import Genetic from 'genetic-lib';
 // (Define relevant functions to be used in the settings object)
 
 const settings = {
-    initFunction,
-    geneticFunctions: {
-        seed,
-        mutate,
-        crossover,
-        fitness,
-        notification
-    },
-    config: {
-        size: 100,
-        mutationIterations: 2,
-        skip: 5,
-        optimise: 'min',
-        initialFitness: 1000,
-        numberOfFittestToSelect: 4,
-        pauseElm: document.getElementById('pause'),
-        stopElm: document.getElementById('stop')
-    },
-    isFinished,
-    onFinished
-};
+  init, // [Function, optional] Will be called when genetic-lib has initialised and ready to start the simulation. Use this if you need to do some initialisation before starting the simulation
+  seed, // [Function, required] Genetic function to create an entity
+  mutate, // [Function, required] Genetic function to apply mutation to an entity
+  crossover, // [Function, required] Genetic function to apply crossover to an entity
+  fitness, // [Function, required] Genetic function to calculate the fitness of an entity
+  notification, // [function, required] Called after every generation (unless specified otherwise in the `skip` setting) with the stats
+  isFinished, // [Function, required] Called with the stats. Should return a Boolean, which is the result of the condition to end the simulation, e.g, `return stats.generation >= 500`
+  onFinished, // [Function, required] 
+  populationSize: 100
+  mutationIterations: 1,
+  skip: 5,
+  optimise: 'min',
+  initialFitness: 1111,
+  numberOfFittestToSelect: 4,
+  shouldKillTheWeak: true
+}
 
-const genetic = new Genetic(settings);
+const genetic = new Genetic(settings)
+genetic.solve()
 ```
+
+### Stats
+The stats is an object passed to the `notification` and `isFinished` settings functions. It contains the following data:
+- `population`: [Array] the entities in the current generation
+- `generation`: [Number] generation number, 0-based
+- `mean`: [Number] mean fitness
+- `fittestEver`: [Object] the fittest entity
+- `isFinished`: [Boolean] is simulation finished
 
 ## Example projects using this library
 * #### Genetic Fly in Maze:

@@ -1,20 +1,6 @@
 class Genetic {
   constructor (settings = {}) {
-    this.initFunction = settings.initFunction
-    const geneticFunctions =
-      typeof settings.geneticFunctions === 'undefined'
-        ? {}
-        : settings.geneticFunctions
-    this.seed = geneticFunctions.seed
-    this.mutate = geneticFunctions.mutate
-    this.crossover = geneticFunctions.crossover
-    this.fitness = geneticFunctions.fitness
-    this.notification = geneticFunctions.notification
-    this.config = typeof settings.config === 'undefined' ? {} : settings.config
-    this.isFinished = settings.isFinished
-    this.onFinished = settings.onFinished
-    this.userData = settings.userData
-    this.isSettingsValid = this.checkSettingsValid(settings)
+    this.settings = settings
     this.population = []
     this.currentGeneration = 0
     this.fittestEntityEver = null
@@ -22,81 +8,75 @@ class Genetic {
     this._init()
   }
 
-  checkSettingsValid (settings) {
-    return (
-      settings.geneticFunctions &&
-      [
-        settings.geneticFunctions.seed,
-        settings.geneticFunctions.mutate,
-        settings.geneticFunctions.crossover,
-        settings.geneticFunctions.fitness,
-        settings.geneticFunctions.notification,
-        settings.isFinished
-      ].every(func => typeof func === 'function')
-    )
-  }
-
   _init () {
-    if (!this.isSettingsValid) {
-      return
+    const { init } = this.settings
+    if (!this.checkSettingsValid()) {
+      throw new Error(
+        'genetic-lib: some of the mandatory functions are not functions. Cannot proceed.'
+      )
     }
     this._initNumFittestToSelect()
     this._setDefaults()
-    if (typeof this.initFunction === 'function') {
-      this.initFunction()
+    if (typeof init === 'function') {
+      init()
     }
-    if (this.config.pauseElm) {
-      this._onPauseClicked = this._onPauseClicked.bind(this)
-      this.config.pauseElm.addEventListener('click', this._onPauseClicked)
-    }
-    if (this.config.stopElm) {
-      this._onStopClicked = this._onStopClicked.bind(this)
-      this.config.stopElm.addEventListener('click', this._onStopClicked)
+  }
+
+  checkSettingsValid () {
+    const {
+      seed,
+      mutate,
+      crossover,
+      fitness,
+      notification,
+      isFinished
+    } = this.settings
+    return [seed, mutate, crossover, fitness, notification, isFinished].every(
+      func => typeof func === 'function'
+    )
+  }
+
+  _initNumFittestToSelect () {
+    const { settings } = this
+    if (!settings.numberOfFittestToSelect) {
+      // Default value is 2 if falsy
+      settings.numberOfFittestToSelect = 2
+    } else if (settings.numberOfFittestToSelect % 2 !== 0) {
+      // Must be an even number
+      settings.numberOfFittestToSelect++
     }
   }
 
   _setDefaults () {
-    this.config.size =
-      typeof this.config.size !== 'number' ||
-      this.numberOfFittestToSelect > this.config.size
+    const { settings } = this
+    settings.populationSize =
+      typeof settings.populationSize !== 'number' ||
+      this.numberOfFittestToSelect > settings.populationSize
         ? 20
-        : this.config.size
-    this.config.mutationIterations =
-      typeof this.config.mutationIterations !== 'number' ||
-      this.config.mutationIterations < 0
+        : settings.populationSize
+    settings.mutationIterations =
+      typeof settings.mutationIterations !== 'number' ||
+      settings.mutationIterations < 0
         ? 1
-        : this.config.mutationIterations
-    this.config.skip =
-      typeof this.config.skip !== 'number' || this.config.mutationIterations < 1
+        : settings.mutationIterations
+    settings.skip =
+      typeof settings.skip !== 'number' || settings.mutationIterations < 1
         ? 1
-        : this.config.skip
-    this.config.optimise =
-      this.config.optimise !== 'min' ? 'max' : this.config.optimise
-    this.config.initialFitness =
-      typeof this.config.initialFitness !== 'number'
-        ? 0
-        : this.config.initialFitness
+        : settings.skip
+    settings.optimise = settings.optimise !== 'min' ? 'max' : settings.optimise
+    settings.initialFitness =
+      typeof settings.initialFitness !== 'number' ? 0 : settings.initialFitness
   }
 
-  _initNumFittestToSelect () {
-    if (!this.config.numberOfFittestToSelect) {
-      // Default value is 2 if falsy
-      this.config.numberOfFittestToSelect = 2
-    } else if (this.config.numberOfFittestToSelect % 2 !== 0) {
-      // Must be an even number
-      this.config.numberOfFittestToSelect++
-    }
-  }
-
-  _onPauseClicked () {
+  togglePaused () {
     this.paused = !this.paused
     if (!this.paused) {
       this._next()
     }
   }
 
-  _onStopClicked () {
-    this.isFinished = () => true
+  stop () {
+    this.settings.isFinished = () => true
     if (this.paused) {
       this.paused = false
       this._next()
@@ -104,27 +84,21 @@ class Genetic {
   }
 
   async solve () {
-    if (!this.isSettingsValid) {
-      console.error(
-        'genetic-lib: some of the mandatory functions are not functions. Cannot proceed.'
-      )
-      return
-    }
     try {
       await this._createFirstGeneration()
       this._evolve()
     } catch (e) {
-      console.error(e)
-      this._onStopClicked()
+      console.error('genetic-lib:', e)
+      this.stop()
     }
   }
 
   async _createFirstGeneration () {
     try {
-      for (let i = 0; i < this.config.size; i++) {
+      for (let i = 0; i < this.settings.populationSize; i++) {
         this.population.push({
-          DNA: await this.seed(),
-          fitness: this.config.initialFitness
+          DNA: await this.settings.seed(),
+          fitness: this.settings.initialFitness
         })
       }
     } catch (e) {
@@ -138,21 +112,23 @@ class Genetic {
       await this._computePopulationFitness()
       this._sortEntitiesByFittest()
       this._updateFitnessRecord()
-      // If notification is due
-      if (this.currentGeneration % this.config.skip === 0) {
-        await this.notification(this._stats())
+      const isNotificationDue =
+        this.currentGeneration % this.settings.skip === 0
+      if (isNotificationDue) {
+        this.settings.notification(this._stats())
       }
       this._next()
     } catch (e) {
-      console.error(e)
-      this._onStopClicked()
+      console.error('genetic-lib:', e)
+      this.stop()
     }
   }
 
   _next = () => {
+    const { isFinished, notification } = this.settings
     if (!this.paused) {
-      if (this.isFinished(this._stats())) {
-        this.notification({
+      if (isFinished(this._stats())) {
+        notification({
           ...this._stats(),
           isFinished: true
         })
@@ -166,22 +142,25 @@ class Genetic {
   }
 
   _computePopulationFitness () {
+    const {
+      fitness,
+      numberOfFittestToSelect,
+      shouldKillTheWeak
+    } = this.settings
     let resolvedPromisesNum = 0
     return new Promise((resolve, reject) => {
       this.population.forEach((entity, i) => {
-        Promise.resolve(this.fitness(entity.DNA, `entity${i}`)).then(
-          response => {
-            entity.fitness = response
-            resolvedPromisesNum++
-            if (
-              (this.config.killTheWeak &&
-                resolvedPromisesNum === this.config.numberOfFittestToSelect) ||
-              resolvedPromisesNum === this.population.length
-            ) {
-              resolve()
-            }
+        Promise.resolve(fitness(entity.DNA, `entity${i}`)).then(response => {
+          entity.fitness = response
+          resolvedPromisesNum++
+          if (
+            (shouldKillTheWeak &&
+              resolvedPromisesNum === numberOfFittestToSelect) ||
+            resolvedPromisesNum === this.population.length
+          ) {
+            resolve()
           }
-        )
+        })
       })
     })
   }
@@ -189,7 +168,7 @@ class Genetic {
   _sortEntitiesByFittest () {
     this.population.sort((a, b) => {
       let sort = b.fitness - a.fitness
-      if (this.config.optimise === 'min') {
+      if (this.settings.optimise === 'min') {
         sort *= -1
       }
       return sort
@@ -198,7 +177,7 @@ class Genetic {
 
   _updateFitnessRecord () {
     const aIsFitterThanB = (a, b) => {
-      return this.config.optimise === 'min' ? a < b : a > b
+      return this.settings.optimise === 'min' ? a < b : a > b
     }
 
     const fittestEntityInThisGeneration = this.population[0]
@@ -215,17 +194,26 @@ class Genetic {
   }
 
   _createNewGeneration () {
+    const {
+      crossover,
+      initialFitness,
+      mutate,
+      mutationIterations,
+      numberOfFittestToSelect,
+      populationSize
+    } = this.settings
+
     const createMutateAndAddNewborns = (DNA1, DNA2) => {
-      const newbornsDNAs = this.crossover(DNA1, DNA2)
-      for (let i = 0; i < this.config.mutationIterations; i++) {
-        newbornsDNAs[0] = this.mutate(newbornsDNAs[0])
-        newbornsDNAs[1] = this.mutate(newbornsDNAs[1])
+      const newbornsDNAs = crossover(DNA1, DNA2)
+      for (let i = 0; i < mutationIterations; i++) {
+        newbornsDNAs[0] = mutate(newbornsDNAs[0])
+        newbornsDNAs[1] = mutate(newbornsDNAs[1])
       }
       this.population = this.population.concat(
         newbornsDNAs.map(newbornDNA => {
           return {
             DNA: this._clone(newbornDNA),
-            fitness: this.config.initialFitness
+            fitness: initialFitness
           }
         })
       )
@@ -233,12 +221,8 @@ class Genetic {
 
     this.oldGeneration = this._clone(this.population)
     this.population = []
-    for (
-      let i = 0;
-      i < this.config.size / this.config.numberOfFittestToSelect;
-      i++
-    ) {
-      for (let j = 0; j < this.config.numberOfFittestToSelect; j += 2) {
+    for (let i = 0; i < populationSize / numberOfFittestToSelect; i++) {
+      for (let j = 0; j < numberOfFittestToSelect; j += 2) {
         createMutateAndAddNewborns(
           this.oldGeneration[j].DNA,
           this.oldGeneration[j + 1].DNA
@@ -254,7 +238,7 @@ class Genetic {
   getMeanFitness () {
     const fittest = this.population.slice(
       0,
-      this.config.numberOfFittestToSelect
+      this.settings.numberOfFittestToSelect
     )
     return (
       fittest.reduce((accumulator, currentValue) => {
@@ -274,14 +258,9 @@ class Genetic {
   }
 
   _simulationComplete () {
-    if (this.config.pauseElm) {
-      this.config.pauseElm.removeEventListener('click', this._onPauseClicked)
-    }
-    if (this.config.stopElm) {
-      this.config.stopElm.removeEventListener('click', this._onStopClicked)
-    }
-    if (typeof this.onFinished === 'function') {
-      this.onFinished(this._stats())
+    const { onFinished } = this.settings
+    if (typeof onFinished === 'function') {
+      onFinished(this._stats())
     }
   }
 }

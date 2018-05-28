@@ -1,6 +1,6 @@
 {
   "name": "genetic-lib",
-  "version": "1.0.0-beta.8",
+  "version": "1.0.0-beta.9",
   "description": "General-purpose Genetic Algorithm library",
   "main": "dist/index.js",
   "scripts": {
