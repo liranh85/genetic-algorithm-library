@@ -24,14 +24,14 @@ import Genetic from 'genetic-lib';
 // (Define relevant functions to be used in the settings object)
 
 const settings = {
-  init, // [Function, optional] Will be called when genetic-lib has initialised and ready to start the simulation. Use this if you need to do some initialisation before starting the simulation
   seed, // [Function, required] Genetic function to create an entity
   mutate, // [Function, required] Genetic function to apply mutation to an entity
   crossover, // [Function, required] Genetic function to apply crossover to an entity
   fitness, // [Function, required] Genetic function to calculate the fitness of an entity
   notification, // [function, required] Called after every generation (unless specified otherwise in the `skip` setting) with the stats
   isFinished, // [Function, required] Called with the stats. Should return a Boolean, which is the result of the condition to end the simulation, e.g, `return stats.generation >= 500`
-  onFinished, // [Function, required] 
+  init, // [Function, optional] Will be called when genetic-lib has initialised and ready to start the simulation. Use this if you need to do some initialisation before starting the simulation
+  onFinished, // [Function, optional] Will be called with the stats when the simulation has completed
   populationSize: 100
   mutationIterations: 1,
   skip: 5,

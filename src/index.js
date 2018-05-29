@@ -86,11 +86,14 @@ class Genetic {
   async solve () {
     try {
       await this._createFirstGeneration()
-      this._evolve()
-    } catch (e) {
-      console.error('genetic-lib:', e)
-      this.stop()
+    } catch (error) {
+      console.error(
+        'genetic-lib: error occurred while trying to create first generation',
+        error
+      )
+      this._simulationComplete()
     }
+    this._evolve()
   }
 
   async _createFirstGeneration () {
@@ -101,8 +104,11 @@ class Genetic {
           fitness: this.settings.initialFitness
         })
       }
-    } catch (e) {
-      console.error(e)
+    } catch (error) {
+      console.error(
+        'genetic-lib: error occurred, most likely to do with the user-supplied seed function.',
+        error
+      )
       this._simulationComplete()
     }
   }
@@ -110,18 +116,29 @@ class Genetic {
   async _evolve () {
     try {
       await this._computePopulationFitness()
-      this._sortEntitiesByFittest()
-      this._updateFitnessRecord()
-      const isNotificationDue =
-        this.currentGeneration % this.settings.skip === 0
-      if (isNotificationDue) {
-        this.settings.notification(this._stats())
-      }
-      this._next()
-    } catch (e) {
-      console.error('genetic-lib:', e)
-      this.stop()
+    } catch (error) {
+      console.error(
+        'genetic-lib: error occurred while computing population fitness.',
+        error
+      )
+      this._simulationComplete()
     }
+
+    this._sortEntitiesByFittest()
+    this._updateFitnessRecord()
+    const isNotificationDue = this.currentGeneration % this.settings.skip === 0
+    if (isNotificationDue) {
+      try {
+        await this.settings.notification(this._stats())
+      } catch (error) {
+        console.error(
+          'genetic-lib: error occurred while awaiting the user-supplied notification function.',
+          error
+        )
+        this._simulationComplete()
+      }
+    }
+    this._next()
   }
 
   _next = () => {
