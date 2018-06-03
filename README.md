@@ -46,7 +46,7 @@ genetic.solve()
 ```
 
 ### Stats
-The stats is an object passed to the `notification` and `isFinished` settings functions. It contains the following data:
+The stats is an object passed to the `notification`, `isFinished` and `onFinished` settings functions. It contains the following data:
 - `population`: [Array] the entities in the current generation
 - `generation`: [Number] generation number, 0-based
 - `mean`: [Number] mean fitness
@@ -54,9 +54,9 @@ The stats is an object passed to the `notification` and `isFinished` settings fu
 - `isFinished`: [Boolean] is simulation finished
 
 ## Example projects using this library
-* #### Genetic Fly in Maze:
+* ### Genetic Fly in Maze:
   * Repo: https://github.com/liranh85/genetic-fly-in-maze
   * Demo: http://www.liran.co.uk/ga/genetic-fly-in-maze
-* #### Genetic String Solver:
+* ### Genetic String Solver:
   * Repo: https://github.com/liranh85/genetic-string-solver
   * Demo: http://www.liran.co.uk/ga/genetic-string-solver
