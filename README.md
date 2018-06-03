@@ -50,7 +50,7 @@ The stats is an object passed to the `notification`, `isFinished` and `onFinishe
 - `population`: [Array] the entities in the current generation
 - `generation`: [Number] generation number, 0-based
 - `mean`: [Number] mean fitness
-- `fittestEver`: [Object] the fittest entity
+- `fittestEver`: [Object] the fittest entity so far
 - `isFinished`: [Boolean] is simulation finished
 
 ## Example projects using this library
