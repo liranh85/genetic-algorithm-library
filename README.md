@@ -53,6 +53,24 @@ The stats is an object passed to the `notification`, `isFinished` and `onFinishe
 - `fittestEver`: [Object] the fittest entity so far
 - `isFinished`: [Boolean] is simulation finished
 
+## Public methods
+
+### `solve()`
+Runs the simulation
+
+### `getMeanFitness()`
+Returns a number representing the mean fitness of the current generation
+
+### `setFittestEver({ DNA, fitness, generation })`
+Allows to manually set the fittest entity so far
+
+### `stop()`
+Stops the simulation
+
+### `togglePaused()`
+Pauses/resumes the simulation
+
+
 ## Example projects using this library
 * ### Genetic Fly in Maze:
   * Repo: https://github.com/liranh85/genetic-fly-in-maze

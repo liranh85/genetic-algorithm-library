@@ -10,7 +10,7 @@ class Genetic {
 
   _init () {
     const { init } = this.settings
-    if (!this.checkSettingsValid()) {
+    if (!this._isSettingsValid()) {
       throw new Error(
         'genetic-lib: some of the mandatory functions are not functions. Cannot proceed.'
       )
@@ -22,7 +22,7 @@ class Genetic {
     }
   }
 
-  checkSettingsValid () {
+  _isSettingsValid () {
     const {
       seed,
       mutate,
@@ -66,34 +66,6 @@ class Genetic {
     settings.optimise = settings.optimise !== 'min' ? 'max' : settings.optimise
     settings.initialFitness =
       typeof settings.initialFitness !== 'number' ? 0 : settings.initialFitness
-  }
-
-  togglePaused () {
-    this.paused = !this.paused
-    if (!this.paused) {
-      this._next()
-    }
-  }
-
-  stop () {
-    this.settings.isFinished = () => true
-    if (this.paused) {
-      this.paused = false
-      this._next()
-    }
-  }
-
-  async solve () {
-    try {
-      await this._createFirstGeneration()
-    } catch (error) {
-      console.error(
-        'genetic-lib: error occurred while trying to create first generation',
-        error
-      )
-      this._simulationComplete()
-    }
-    this._evolve()
   }
 
   async _createFirstGeneration () {
@@ -252,18 +224,6 @@ class Genetic {
     return JSON.parse(JSON.stringify(obj))
   }
 
-  getMeanFitness () {
-    const fittest = this.population.slice(
-      0,
-      this.settings.numberOfFittestToSelect
-    )
-    return (
-      fittest.reduce((accumulator, currentValue) => {
-        return accumulator + currentValue.fitness
-      }, 0) / fittest.length
-    )
-  }
-
   _stats () {
     return {
       population: this._clone(this.population),
@@ -278,6 +238,56 @@ class Genetic {
     const { onFinished } = this.settings
     if (typeof onFinished === 'function') {
       onFinished(this._stats())
+    }
+  }
+
+  async solve () {
+    try {
+      await this._createFirstGeneration()
+    } catch (error) {
+      console.error(
+        'genetic-lib: error occurred while trying to create first generation',
+        error
+      )
+      this._simulationComplete()
+    }
+    this._evolve()
+  }
+
+  getMeanFitness () {
+    const fittest = this.population.slice(
+      0,
+      this.settings.numberOfFittestToSelect
+    )
+    return (
+      fittest.reduce((accumulator, currentValue) => {
+        return accumulator + currentValue.fitness
+      }, 0) / fittest.length
+    )
+  }
+
+  setFittestEver ({ DNA, fitness, generation }) {
+    if (DNA && fitness && generation) {
+      this.fittestEntityEver = {
+        DNA,
+        fitness,
+        generation
+      }
+    }
+  }
+
+  stop () {
+    this.settings.isFinished = () => true
+    if (this.paused) {
+      this.paused = false
+      this._next()
+    }
+  }
+
+  togglePaused () {
+    this.paused = !this.paused
+    if (!this.paused) {
+      this._next()
     }
   }
 }
